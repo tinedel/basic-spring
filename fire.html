@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<canvas id="myCanvas" width="500" height="500" style="border:1px solid #000000;"></canvas>
+
+<script lang="javascript">
+  var t = 0;
+  window.setInterval( () => {
+      var c = document.getElementById("myCanvas");
+      var ctx = c.getContext("2d");
+      var imgData = ctx.getImageData(0, 0, 500, 500);
+      var data = imgData.data;
+      const getColorIndicesForCoord = (x, y, width) => {
+          if(x<0) x = canvasWidth -1;
+          if(x>=canvasWidth) x = 0;
+          const red = y * (width * 4) + x * 4;
+          return [red, red + 1, red + 2, red + 3];
+      };
+      const canvasWidth = 500;
+      for (var y = 499; y >= 0; y--) {
+          for (var x = 0; x < 500; x++) {
+
+              const colorIndices = getColorIndicesForCoord(x, y, canvasWidth);
+
+              /*
+              1 2 3
+              4 5 6
+              7 8 9
+               */
+              const [redIndex, greenIndex, blueIndex, alphaIndex] = colorIndices;
+              data[alphaIndex] = 255;
+              if(y === 499) {
+                  data[redIndex] = parseInt(Math.random() * 255);
+                  // data[alphaIndex] = parseInt(Math.random() * 255);
+              } else {
+                  const [r8, g8, b8, a8] = getColorIndicesForCoord(x, y+1, canvasWidth);
+                  const [r7, g7, b7, a7] = getColorIndicesForCoord(x-1, y+1, canvasWidth);
+                  const [r9, g9, b9, a9] = getColorIndicesForCoord(x+1, y+1, canvasWidth);
+
+                  data[redIndex] = (data[r8] + data[r7] + data[r9] + data[redIndex])/4;
+                  if(y<150) {
+                      data[greenIndex] = 0;
+                  } else {
+                      data[greenIndex] = (data[g8] + data[g7] + data[g9] + data[greenIndex])/4;
+                  }
+                  // data[alphaIndex] = (data[a8] + data[a7] + data[a9] + data[alphaIndex])/4;
+              }
+          }
+      }
+
+      const dx = 250;
+      const dy = 250;
+      for(var p = 0; p<6*Math.PI;p+=0.01) {
+          const x = parseInt(dx + 100*Math.cos(2*p));
+          const y = parseInt(dy + 100*Math.sin(5*p + t));
+          const [redIndex, greenIndex, blueIndex, alphaIndex] = getColorIndicesForCoord(x, y, canvasWidth);;
+          data[greenIndex] = 255;
+      }
+
+      t+=0.03;
+
+      ctx.putImageData(imgData, 0, 0);
+  }, 2);
+</script>
+
+</body>
+</html>
